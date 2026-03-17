@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"/>
 <title>Something is being built.</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -227,10 +227,13 @@
   }
 
   @media (max-width: 600px) {
-    .page { padding: 48px 28px 48px 36px; }
+    .page { padding: 40px 24px 40px 32px; min-height: 100svh; }
+    .headline { margin-bottom: 28px; }
+    .subtext { margin-bottom: 36px; font-size: 12px; }
     .input-row { flex-direction: column; max-width: 100%; }
-    input[type="email"] { border-right: 2px solid var(--white); border-bottom: none; }
-    button[type="submit"] { width: 100%; }
+    input[type="email"] { border-right: 2px solid var(--white); border-bottom: none; font-size: 16px; /* prevents iOS auto-zoom */ }
+    button[type="submit"] { width: 100%; padding: 18px; font-size: 15px; }
+    .footer { display: none; }
   }
 </style>
 </head>
