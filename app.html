@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"/>
+<title>Hatch</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c27;
+    --border: #2a2a3a;
+    --accent: #7c6aff;
+    --accent2: #ff6a8a;
+    --text: #f0f0f8;
+    --text2: #8888aa;
+    --text3: #44445a;
+    --success: #4ade80;
+    --radius: 16px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* ── SCREENS ─────────────────────────────────────────── */
+  .screen { display: none; flex-direction: column; min-height: 100dvh; }
+  .screen.active { display: flex; }
+
+  /* ── AUTH ────────────────────────────────────────────── */
+  #auth-screen {
+    align-items: center;
+    justify-content: center;
+    padding: 40px 28px;
+    gap: 48px;
+  }
+
+  .auth-logo {
+    text-align: center;
+  }
+
+  .auth-logo h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 52px;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .auth-logo p {
+    color: var(--text2);
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    margin-top: 6px;
+  }
+
+  .auth-form { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 14px; }
+
+  .auth-tabs {
+    display: flex;
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 6px;
+  }
+
+  .auth-tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text2);
+    border-radius: 9px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .auth-tab.active {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  input, textarea, select {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, textarea:focus { border-color: var(--accent); }
+  input::placeholder, textarea::placeholder { color: var(--text3); }
+
+  .btn {
+    padding: 15px 24px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-ghost {
+    background: var(--surface);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+  }
+
+  .err { color: var(--accent2); font-size: 13px; text-align: center; min-height: 18px; }
+
+  /* ── ONBOARDING ───────────────────────────────────────── */
+  #onboard-screen { padding: 48px 28px 32px; gap: 32px; }
+
+  .onboard-header h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    line-height: 1.15;
+  }
+
+  .onboard-header p { color: var(--text2); margin-top: 8px; font-size: 15px; }
+
+  .passions-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .passion-chip {
+    padding: 10px 18px;
+    border-radius: 100px;
+    border: 1.5px solid var(--border);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text2);
+    background: var(--surface);
+    user-select: none;
+  }
+
+  .passion-chip.selected {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(124, 106, 255, 0.12);
+  }
+
+  /* ── NAV ──────────────────────────────────────────────── */
+  .app-wrapper {
+    display: none;
+    flex-direction: column;
+    height: 100dvh;
+  }
+
+  .app-wrapper.active { display: flex; }
+
+  .app-content { flex: 1; overflow-y: auto; overflow-x: hidden; }
+
+  .bottom-nav {
+    display: flex;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 12px 0 max(12px, env(safe-area-inset-bottom));
+  }
+
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    color: var(--text3);
+    transition: color 0.2s;
+    padding: 4px 0;
+  }
+
+  .nav-item.active { color: var(--accent); }
+
+  .nav-item svg { width: 22px; height: 22px; }
+  .nav-item span { font-size: 10px; font-weight: 500; letter-spacing: 0.04em; }
+
+  /* ── PAGES ────────────────────────────────────────────── */
+  .page { display: none; padding: 24px 20px; }
+  .page.active { display: block; }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .page-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+  }
+
+  /* ── DISCOVER ─────────────────────────────────────────── */
+  #discover-page { padding: 0; position: relative; height: calc(100dvh - 80px); overflow: hidden; }
+
+  .discover-header {
+    padding: 24px 20px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-stack {
+    position: relative;
+    flex: 1;
+    margin: 0 20px;
+    height: calc(100dvh - 240px);
+  }
+
+  .swipe-card {
+    position: absolute;
+    inset: 0;
+    background: var(--surface);
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.08s ease;
+    touch-action: none;
+  }
+
+  .swipe-card:active { cursor: grabbing; }
+
+  .card-avatar {
+    width: 100%;
+    height: 55%;
+    background: linear-gradient(135deg, var(--surface2), var(--accent) 200%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 72px;
+    position: relative;
+  }
+
+  .card-gradient {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(transparent, var(--surface));
+  }
+
+  .card-body { padding: 20px; }
+
+  .card-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+  }
+
+  .card-school { color: var(--text2); font-size: 14px; margin-top: 2px; }
+
+  .card-bio { color: var(--text2); font-size: 14px; margin-top: 12px; line-height: 1.5; }
+
+  .card-passions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .card-passion {
+    padding: 6px 12px;
+    background: rgba(124,106,255,0.12);
+    border-radius: 100px;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .swipe-actions {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding: 20px;
+  }
+
+  .swipe-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 24px;
+    transition: transform 0.15s;
+  }
+
+  .swipe-btn:active { transform: scale(0.9); }
+  .swipe-btn.pass { background: var(--surface2); }
+  .swipe-btn.like { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+
+  .swipe-indicator {
+    position: absolute;
+    top: 24px;
+    padding: 8px 20px;
+    border-radius: 100px;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.1em;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s;
+  }
+
+  .swipe-indicator.like { right: 20px; background: var(--success); color: #000; }
+  .swipe-indicator.pass { left: 20px; background: var(--accent2); color: #fff; }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 16px;
+    color: var(--text2);
+    text-align: center;
+    padding: 40px;
+  }
+
+  .empty-state .emoji { font-size: 56px; }
+  .empty-state h3 { font-size: 20px; color: var(--text); }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  /* ── EVENTS ───────────────────────────────────────────── */
+  .event-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .event-card:hover { border-color: var(--accent); }
+
+  .event-date {
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .event-title { font-size: 18px; font-weight: 600; }
+  .event-loc { color: var(--text2); font-size: 13px; margin-top: 4px; }
+  .event-desc { color: var(--text2); font-size: 14px; margin-top: 10px; line-height: 1.5; }
+
+  .fab {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    font-size: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(124,106,255,0.4);
+    transition: transform 0.2s;
+    z-index: 50;
+  }
+
+  .fab:active { transform: scale(0.92); }
+
+  /* ── MESSAGES ─────────────────────────────────────────── */
+  .match-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .match-row:active { opacity: 0.7; }
+
+  .match-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .match-info { flex: 1; }
+  .match-name { font-weight: 600; font-size: 16px; }
+  .match-preview { color: var(--text2); font-size: 13px; margin-top: 2px; }
+
+  /* ── CHAT ─────────────────────────────────────────────── */
+  #chat-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+  }
+
+  #chat-screen.active { display: flex; }
+
+  .chat-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .chat-back {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .msg {
+    max-width: 75%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .msg.sent {
+    align-self: flex-end;
+    background: var(--accent);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+
+  .msg.received {
+    align-self: flex-start;
+    background: var(--surface2);
+    border-bottom-left-radius: 4px;
+  }
+
+  .msg-time { font-size: 10px; opacity: 0.6; margin-top: 4px; }
+
+  .chat-input-row {
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px max(16px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .chat-input-row input { flex: 1; border-radius: 100px; padding: 12px 18px; }
+
+  .send-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.15s;
+  }
+
+  .send-btn:active { transform: scale(0.9); }
+
+  /* ── PROFILE ──────────────────────────────────────────── */
+  .profile-avatar-big {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    margin: 0 auto 16px;
+  }
+
+  .profile-name { text-align: center; font-family: 'DM Serif Display', serif; font-size: 26px; }
+  .profile-school { text-align: center; color: var(--text2); font-size: 14px; margin-top: 4px; }
+
+  .profile-section { margin-top: 28px; }
+  .profile-section h3 { font-size: 12px; font-weight: 600; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
+
+  /* ── MODAL ────────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    padding: 28px 24px max(28px, env(safe-area-inset-bottom));
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: 85dvh;
+    overflow-y: auto;
+  }
+
+  .modal h2 { font-family: 'DM Serif Display', serif; font-size: 24px; margin-bottom: 4px; }
+
+  /* ── MATCH ANIMATION ──────────────────────────────────── */
+  .match-popup {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 300;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .match-popup.active { display: flex; animation: popIn 0.4s ease; }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .match-popup h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 42px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .match-popup p { color: var(--text2); font-size: 16px; }
+
+  .loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    color: var(--text2);
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 28px; height: 28px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── AUTH ─────────────────────────────────────────────── -->
+<div id="auth-screen" class="screen active">
+  <div class="auth-logo">
+    <h1>Hatch</h1>
+    <p>Find your people at your school</p>
+  </div>
+  <div class="auth-form">
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Sign In</div>
+      <div class="auth-tab" onclick="switchTab('signup')">Sign Up</div>
+    </div>
+    <input id="auth-email" type="email" placeholder="Email address" autocomplete="email"/>
+    <input id="auth-password" type="password" placeholder="Password" autocomplete="current-password"/>
+    <div class="err" id="auth-err"></div>
+    <button class="btn btn-primary" onclick="handleAuth()">Continue</button>
+  </div>
+</div>
+
+<!-- ── ONBOARDING ────────────────────────────────────────── -->
+<div id="onboard-screen" class="screen">
+  <div class="onboard-header">
+    <h2>Tell us about yourself</h2>
+    <p>This is how others will find you</p>
+  </div>
+  <input id="ob-name" type="text" placeholder="Your name" style="margin-bottom:0"/>
+  <input id="ob-school" type="text" placeholder="Your school (e.g. Aarhus University)"/>
+  <textarea id="ob-bio" placeholder="Short bio — what are you about?" rows="3" style="resize:none"></textarea>
+  <div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:12px;letter-spacing:0.05em;">PICK YOUR PASSIONS</p>
+    <div class="passions-grid" id="passions-grid"></div>
+  </div>
+  <div style="flex:1"></div>
+  <button class="btn btn-primary" onclick="saveProfile()">Let's go →</button>
+  <div class="err" id="ob-err"></div>
+</div>
+
+<!-- ── MAIN APP ───────────────────────────────────────────── -->
+<div class="app-wrapper" id="app">
+  <div class="app-content">
+
+    <!-- DISCOVER -->
+    <div class="page active" id="discover-page">
+      <div class="discover-header">
+        <div class="page-title">Discover</div>
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;" onclick="showPage('profile-page')">👤</div>
+      </div>
+      <div class="card-stack" id="card-stack">
+        <div class="loader"><div class="spinner"></div></div>
+      </div>
+      <div class="swipe-actions">
+        <button class="swipe-btn pass" onclick="doSwipe('left')">✕</button>
+        <button class="swipe-btn like" onclick="doSwipe('right')">♥</button>
+      </div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="page" id="events-page">
+      <div class="page-header">
+        <div class="page-title">Events</div>
+      </div>
+      <div id="events-list"><div class="loader"><div class="spinner"></div></div></div>
+      <button class="fab" onclick="openEventModal()">+</button>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="page" id="messages-page">
+      <div class="page-header">
+        <div class="page-title">Messages</div>
+      </div>
+      <div id="matches-list"><div class="loader"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="page" id="profile-page">
+      <div class="page-header">
+        <div class="page-title">Profile</div>
+        <button class="btn btn-ghost" style="width:auto;padding:8px 16px;font-size:13px;" onclick="signOut()">Sign out</button>
+      </div>
+      <div id="profile-content"><div class="loader"><div class="spinner"></div></div></div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" onclick="showPage('discover-page')" id="nav-discover">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <span>Discover</span>
+    </div>
+    <div class="nav-item" onclick="showPage('events-page')" id="nav-events">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <span>Events</span>
+    </div>
+    <div class="nav-item" onclick="showPage('messages-page')" id="nav-messages">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span>Messages</span>
+    </div>
+    <div class="nav-item" onclick="showPage('profile-page')" id="nav-profile">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Profile</span>
+    </div>
+  </nav>
+</div>
+
+<!-- ── CHAT SCREEN ────────────────────────────────────────── -->
+<div id="chat-screen" class="screen">
+  <div class="chat-header">
+    <button class="chat-back" onclick="closeChat()">←</button>
+    <div class="match-avatar" id="chat-avatar" style="width:36px;height:36px;font-size:16px;"></div>
+    <div style="font-weight:600;" id="chat-name"></div>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-input-row">
+    <input type="text" id="chat-input" placeholder="Message…" onkeydown="if(event.key==='Enter')sendMessage()"/>
+    <button class="send-btn" onclick="sendMessage()">↑</button>
+  </div>
+</div>
+
+<!-- ── EVENT MODAL ────────────────────────────────────────── -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal">
+    <h2>New Event</h2>
+    <input id="ev-title" type="text" placeholder="Event title"/>
+    <input id="ev-location" type="text" placeholder="Location"/>
+    <input id="ev-date" type="datetime-local"/>
+    <textarea id="ev-desc" placeholder="Description (optional)" rows="3" style="resize:none"></textarea>
+    <button class="btn btn-primary" onclick="createEvent()">Create Event</button>
+    <button class="btn btn-ghost" onclick="closeEventModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- ── MATCH POPUP ────────────────────────────────────────── -->
+<div class="match-popup" id="match-popup" onclick="closeMatchPopup()">
+  <div style="font-size:64px;">🎉</div>
+  <h2>It's a Match!</h2>
+  <p id="match-popup-text">You and someone both swiped right.<br>Start a conversation!</p>
+  <button class="btn btn-primary" style="max-width:280px;" onclick="closeMatchPopup()">Keep Discovering</button>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://hiooxstzttokleqdhpsm.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhpb294c3R6dHRva2xlcWRocHNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjkzNjEsImV4cCI6MjA4OTQwNTM2MX0.M60pPxkgTZNFZxVRSp8mJphkwWYjgEnoNotCY3Uu6YI';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const PASSIONS = ['🎨 Design','💻 Coding','🎵 Music','📸 Photography','✍️ Writing','🎮 Gaming','🏋️ Fitness','🌍 Travel','🍳 Cooking','📚 Reading','🎭 Theatre','🧪 Science','🚀 Startups','🎬 Film','🌱 Sustainability','🧘 Wellness','🎯 Sports','🤖 AI'];
+const EMOJIS = ['🦊','🐺','🦁','🐯','🦋','🌊','🔥','⚡','🌙','🌟','🎯','🎪'];
+
+let currentUser = null;
+let currentProfile = null;
+let discoverProfiles = [];
+let currentCardIdx = 0;
+let isDragging = false;
+let startX = 0, startY = 0, currentX = 0;
+let currentMatchId = null;
+let chatSubscription = null;
+let authMode = 'login';
+
+// ── INIT ──────────────────────────────────────────────────
+async function init() {
+  renderPassions();
+  const { data: { session } } = await db.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await loadProfile();
+  }
+}
+
+function renderPassions() {
+  const grid = document.getElementById('passions-grid');
+  grid.innerHTML = PASSIONS.map(p => `
+    <div class="passion-chip" onclick="togglePassion(this,'${p}')">${p}</div>
+  `).join('');
+}
+
+// ── AUTH ──────────────────────────────────────────────────
+function switchTab(mode) {
+  authMode = mode;
+  document.querySelectorAll('.auth-tab').forEach((t, i) => {
+    t.classList.toggle('active', (mode === 'login' && i === 0) || (mode === 'signup' && i === 1));
+  });
+}
+
+async function handleAuth() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const err = document.getElementById('auth-err');
+  err.textContent = '';
+
+  if (!email || !password) { err.textContent = 'Please fill in all fields.'; return; }
+
+  if (authMode === 'signup') {
+    const { data, error } = await db.auth.signUp({ email, password });
+    if (error) { err.textContent = '❌ ' + error.message; return; }
+    if (!data.user) { err.textContent = '❌ No user returned — check Supabase email settings.'; return; }
+    currentUser = data.user;
+    showScreen('onboard-screen');
+  } else {
+    const { data, error } = await db.auth.signInWithPassword({ email, password });
+    if (error) { err.textContent = '❌ ' + error.message; return; }
+    currentUser = data.user;
+    await loadProfile();
+  }
+}
+
+async function loadProfile() {
+  const { data } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+  if (!data) {
+    showScreen('onboard-screen');
+    return;
+  }
+  currentProfile = data;
+  showApp();
+}
+
+async function signOut() {
+  await db.auth.signOut();
+  currentUser = null;
+  currentProfile = null;
+  location.reload();
+}
+
+// ── ONBOARDING ────────────────────────────────────────────
+function togglePassion(el, passion) {
+  el.classList.toggle('selected');
+}
+
+async function saveProfile() {
+  const name = document.getElementById('ob-name').value.trim();
+  const school = document.getElementById('ob-school').value.trim();
+  const bio = document.getElementById('ob-bio').value.trim();
+  const passions = [...document.querySelectorAll('.passion-chip.selected')].map(el => el.textContent);
+  const err = document.getElementById('ob-err');
+
+  if (!name) { err.textContent = 'Please enter your name.'; return; }
+
+  const { error } = await db.from('profiles').insert({
+    id: currentUser.id,
+    name, school, bio, passions
+  });
+
+  if (error) { err.textContent = error.message; return; }
+  const { data } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+  currentProfile = data;
+  showApp();
+}
+
+// ── SCREENS ───────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+}
+
+function showApp() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('app').classList.add('active');
+  loadDiscover();
+  loadEvents();
+  loadMatches();
+  loadProfilePage();
+}
+
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId)?.classList.add('active');
+
+  const navMap = {
+    'discover-page': 'nav-discover',
+    'events-page': 'nav-events',
+    'messages-page': 'nav-messages',
+    'profile-page': 'nav-profile'
+  };
+
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navId = navMap[pageId];
+  if (navId) document.getElementById(navId)?.classList.add('active');
+}
+
+// ── DISCOVER ──────────────────────────────────────────────
+async function loadDiscover() {
+  const stack = document.getElementById('card-stack');
+
+  // Get already swiped profiles
+  const { data: swiped } = await db.from('swipes').select('swiped_id').eq('swiper_id', currentUser.id);
+  const swipedIds = (swiped || []).map(s => s.swiped_id);
+  swipedIds.push(currentUser.id);
+
+  const { data: profiles } = await db.from('profiles').select('*').not('id', 'in', `(${swipedIds.join(',') || '\'\''})`);
+  discoverProfiles = profiles || [];
+  currentCardIdx = 0;
+  renderCards();
+}
+
+function getEmoji(id) {
+  const sum = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  return EMOJIS[sum % EMOJIS.length];
+}
+
+function renderCards() {
+  const stack = document.getElementById('card-stack');
+  if (!discoverProfiles.length || currentCardIdx >= discoverProfiles.length) {
+    stack.innerHTML = `
+      <div class="empty-state">
+        <div class="emoji">🌟</div>
+        <h3>You've seen everyone!</h3>
+        <p>Check back later as more students join Hatch.</p>
+      </div>`;
+    return;
+  }
+
+  const profile = discoverProfiles[currentCardIdx];
+  const next = discoverProfiles[currentCardIdx + 1];
+
+  stack.innerHTML = '';
+
+  if (next) {
+    const bgCard = document.createElement('div');
+    bgCard.className = 'swipe-card';
+    bgCard.style.cssText = 'transform: scale(0.95) translateY(16px); z-index: 1;';
+    bgCard.innerHTML = cardHTML(next);
+    stack.appendChild(bgCard);
+  }
+
+  const card = document.createElement('div');
+  card.className = 'swipe-card';
+  card.style.zIndex = '2';
+  card.innerHTML = `
+    <div class="swipe-indicator like" id="ind-like">LIKE</div>
+    <div class="swipe-indicator pass" id="ind-pass">PASS</div>
+    ${cardHTML(profile)}
+  `;
+  stack.appendChild(card);
+
+  setupDrag(card);
+}
+
+function cardHTML(p) {
+  const emoji = getEmoji(p.id);
+  const passionTags = (p.passions || []).map(pp => `<span class="card-passion">${pp}</span>`).join('');
+  return `
+    <div class="card-avatar">${emoji}<div class="card-gradient"></div></div>
+    <div class="card-body">
+      <div class="card-name">${p.name}</div>
+      <div class="card-school">${p.school || 'Student'}</div>
+      ${p.bio ? `<div class="card-bio">${p.bio}</div>` : ''}
+      <div class="card-passions">${passionTags}</div>
+    </div>`;
+}
+
+function setupDrag(card) {
+  card.addEventListener('mousedown', dragStart);
+  card.addEventListener('touchstart', dragStart, { passive: true });
+  document.addEventListener('mousemove', dragMove);
+  document.addEventListener('touchmove', dragMove, { passive: true });
+  document.addEventListener('mouseup', dragEnd);
+  document.addEventListener('touchend', dragEnd);
+}
+
+function dragStart(e) {
+  isDragging = true;
+  const point = e.touches ? e.touches[0] : e;
+  startX = point.clientX;
+  startY = point.clientY;
+  currentX = 0;
+}
+
+function dragMove(e) {
+  if (!isDragging) return;
+  const point = e.touches ? e.touches[0] : e;
+  currentX = point.clientX - startX;
+  const currentY = point.clientY - startY;
+  const rotate = currentX * 0.08;
+
+  const card = document.querySelector('.swipe-card[style*="z-index: 2"]');
+  if (!card) return;
+  card.style.transform = `translate(${currentX}px, ${currentY * 0.3}px) rotate(${rotate}deg)`;
+
+  const likeInd = document.getElementById('ind-like');
+  const passInd = document.getElementById('ind-pass');
+  if (likeInd) likeInd.style.opacity = Math.max(0, currentX / 80);
+  if (passInd) passInd.style.opacity = Math.max(0, -currentX / 80);
+}
+
+async function dragEnd() {
+  if (!isDragging) return;
+  isDragging = false;
+  const card = document.querySelector('.swipe-card[style*="z-index: 2"]');
+  if (!card) return;
+
+  document.removeEventListener('mousemove', dragMove);
+  document.removeEventListener('touchmove', dragMove);
+  document.removeEventListener('mouseup', dragEnd);
+  document.removeEventListener('touchend', dragEnd);
+
+  if (Math.abs(currentX) > 80) {
+    const dir = currentX > 0 ? 'right' : 'left';
+    const flyX = dir === 'right' ? window.innerWidth * 1.5 : -window.innerWidth * 1.5;
+    card.style.transition = 'transform 0.4s ease';
+    card.style.transform = `translate(${flyX}px, 0) rotate(${dir === 'right' ? 30 : -30}deg)`;
+    await doSwipe(dir);
+  } else {
+    card.style.transition = 'transform 0.3s ease';
+    card.style.transform = '';
+    setTimeout(() => { card.style.transition = ''; }, 300);
+  }
+}
+
+async function doSwipe(direction) {
+  if (currentCardIdx >= discoverProfiles.length) return;
+  const profile = discoverProfiles[currentCardIdx];
+  currentCardIdx++;
+
+  await db.from('swipes').insert({ swiper_id: currentUser.id, swiped_id: profile.id, direction });
+
+  if (direction === 'right') {
+    // Check for mutual match
+    const { data: theirSwipe } = await db.from('swipes')
+      .select('*')
+      .eq('swiper_id', profile.id)
+      .eq('swiped_id', currentUser.id)
+      .eq('direction', 'right')
+      .single();
+
+    if (theirSwipe) {
+      // It's a match!
+      const { data: match } = await db.from('matches').insert({
+        user1_id: currentUser.id,
+        user2_id: profile.id
+      }).select().single();
+
+      document.getElementById('match-popup-text').textContent = `You and ${profile.name} both swiped right. Start a conversation!`;
+      document.getElementById('match-popup').classList.add('active');
+      loadMatches();
+    }
+  }
+
+  setTimeout(renderCards, 400);
+}
+
+function closeMatchPopup() {
+  document.getElementById('match-popup').classList.remove('active');
+}
+
+// ── EVENTS ────────────────────────────────────────────────
+async function loadEvents() {
+  const { data: events } = await db.from('events').select('*').order('date', { ascending: true });
+  const list = document.getElementById('events-list');
+
+  if (!events || !events.length) {
+    list.innerHTML = `<div class="empty-state"><div class="emoji">📅</div><h3>No events yet</h3><p>Be the first to create one!</p></div>`;
+    return;
+  }
+
+  list.innerHTML = events.map(ev => {
+    const date = ev.date ? new Date(ev.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'TBD';
+    return `
+      <div class="event-card">
+        <div class="event-date">${date}</div>
+        <div class="event-title">${ev.title}</div>
+        ${ev.location ? `<div class="event-loc">📍 ${ev.location}</div>` : ''}
+        ${ev.description ? `<div class="event-desc">${ev.description}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function openEventModal() {
+  document.getElementById('event-modal').classList.add('active');
+}
+
+function closeEventModal() {
+  document.getElementById('event-modal').classList.remove('active');
+}
+
+async function createEvent() {
+  const title = document.getElementById('ev-title').value.trim();
+  const location = document.getElementById('ev-location').value.trim();
+  const date = document.getElementById('ev-date').value;
+  const description = document.getElementById('ev-desc').value.trim();
+
+  if (!title) return;
+
+  await db.from('events').insert({ creator_id: currentUser.id, title, location, date: date || null, description });
+  closeEventModal();
+  loadEvents();
+
+  document.getElementById('ev-title').value = '';
+  document.getElementById('ev-location').value = '';
+  document.getElementById('ev-date').value = '';
+  document.getElementById('ev-desc').value = '';
+}
+
+// ── MESSAGES ──────────────────────────────────────────────
+async function loadMatches() {
+  const { data: matches } = await db.from('matches').select('*')
+    .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`);
+
+  const list = document.getElementById('matches-list');
+
+  if (!matches || !matches.length) {
+    list.innerHTML = `<div class="empty-state"><div class="emoji">💬</div><h3>No matches yet</h3><p>Keep swiping to find your people!</p></div>`;
+    return;
+  }
+
+  const enriched = await Promise.all(matches.map(async match => {
+    const otherId = match.user1_id === currentUser.id ? match.user2_id : match.user1_id;
+    const { data: profile } = await db.from('profiles').select('*').eq('id', otherId).single();
+    const { data: lastMsg } = await db.from('messages').select('*').eq('match_id', match.id).order('created_at', { ascending: false }).limit(1).single();
+    return { match, profile, lastMsg };
+  }));
+
+  list.innerHTML = enriched.map(({ match, profile, lastMsg }) => {
+    if (!profile) return '';
+    const emoji = getEmoji(profile.id);
+    return `
+      <div class="match-row" onclick="openChat('${match.id}','${profile.id}','${profile.name}')">
+        <div class="match-avatar">${emoji}</div>
+        <div class="match-info">
+          <div class="match-name">${profile.name}</div>
+          <div class="match-preview">${lastMsg ? lastMsg.content : 'Say hello! 👋'}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── CHAT ──────────────────────────────────────────────────
+async function openChat(matchId, otherId, otherName) {
+  currentMatchId = matchId;
+  document.getElementById('chat-name').textContent = otherName;
+  const { data: profile } = await db.from('profiles').select('*').eq('id', otherId).single();
+  document.getElementById('chat-avatar').textContent = profile ? getEmoji(profile.id) : '👤';
+
+  document.getElementById('chat-screen').classList.add('active');
+  await loadMessages();
+
+  // Realtime subscription
+  if (chatSubscription) chatSubscription.unsubscribe();
+  chatSubscription = db.channel('messages:' + matchId)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `match_id=eq.${matchId}` },
+      () => loadMessages())
+    .subscribe();
+}
+
+function closeChat() {
+  document.getElementById('chat-screen').classList.remove('active');
+  if (chatSubscription) { chatSubscription.unsubscribe(); chatSubscription = null; }
+  currentMatchId = null;
+}
+
+async function loadMessages() {
+  const { data: msgs } = await db.from('messages').select('*').eq('match_id', currentMatchId).order('created_at', { ascending: true });
+  const container = document.getElementById('chat-messages');
+  container.innerHTML = (msgs || []).map(msg => {
+    const sent = msg.sender_id === currentUser.id;
+    const time = new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return `
+      <div class="msg ${sent ? 'sent' : 'received'}">
+        ${msg.content}
+        <div class="msg-time">${time}</div>
+      </div>`;
+  }).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const content = input.value.trim();
+  if (!content || !currentMatchId) return;
+  input.value = '';
+
+  await db.from('messages').insert({ match_id: currentMatchId, sender_id: currentUser.id, content });
+  loadMessages();
+}
+
+// ── PROFILE PAGE ──────────────────────────────────────────
+async function loadProfilePage() {
+  if (!currentProfile) return;
+  const content = document.getElementById('profile-content');
+  const passionTags = (currentProfile.passions || []).map(p => `<span class="card-passion">${p}</span>`).join('');
+  const emoji = getEmoji(currentProfile.id);
+
+  content.innerHTML = `
+    <div class="profile-avatar-big">${emoji}</div>
+    <div class="profile-name">${currentProfile.name}</div>
+    <div class="profile-school">${currentProfile.school || 'Student'}</div>
+    ${currentProfile.bio ? `<p style="text-align:center;color:var(--text2);margin-top:12px;line-height:1.6;">${currentProfile.bio}</p>` : ''}
+    <div class="profile-section">
+      <h3>Passions</h3>
+      <div class="card-passions">${passionTags || '<span style="color:var(--text2)">None added yet</span>'}</div>
+    </div>
+  `;
+}
+
+init();
+</script>
+</body>
+</html>
